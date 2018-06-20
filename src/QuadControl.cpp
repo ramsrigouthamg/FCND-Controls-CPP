@@ -69,15 +69,38 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
   // You'll need the arm length parameter L, and the drag/thrust ratio kappa
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-	float l = L / sqrt(2);
-	float tx = momentCmd[0] / l;
-	float ty = momentCmd[1] / l;
-	float tz = momentCmd[2] / kappa;
 
-	cmd.desiredThrustsN[0] = (-tz + ty + tx + collThrustCmd) / 4.0;
-	cmd.desiredThrustsN[1] = (tz + ty - tx + collThrustCmd) / 4.0;
-	cmd.desiredThrustsN[2] = (tz - ty + tx + collThrustCmd) / 4.0;
-	cmd.desiredThrustsN[3] = (-tz - ty - tx + collThrustCmd) / 4.0;
+	//F_tot = F0 + F1 + F2 + F3
+	//	tau_x = (F0 - F1 + F2 - F3) * l                 // This is Roll
+	//	tau_y = (F0 + F1 - F2 - F3) * l                 // This is Pitch
+	//	tau_z = (-F0 + F1 + F2 - F3) * kappa      // This is Yaw
+	float l = L / sqrt(2);
+	float A = collThrustCmd;
+	float B = momentCmd.x / l;
+	float C = momentCmd.y / l;
+	float D = -momentCmd.z / kappa;
+
+
+	float F0 = (A + B + C + D) / 4.0;// front left
+	float F1 = (A - B + C - D) / 4.0; // front right
+	float F2 = (A + B - C - D) / 4.0; // rear left
+	float F3 = (A - B - C + D) / 4.0; // rear right 
+
+
+	cmd.desiredThrustsN[0] = F0; // front left
+	cmd.desiredThrustsN[1] = F1; // front right
+	cmd.desiredThrustsN[2] = F2; // rear left
+	cmd.desiredThrustsN[3] = F3; // rear right
+
+	//float l = L / sqrt(2);
+	//float tx = momentCmd[0] / l;
+	//float ty = momentCmd[1] / l;
+	//float tz = momentCmd[2] / kappa;
+
+	//cmd.desiredThrustsN[0] = (-tz + ty + tx + collThrustCmd) / 4.0;
+	//cmd.desiredThrustsN[1] = (tz + ty - tx + collThrustCmd) / 4.0;
+	//cmd.desiredThrustsN[2] = (tz - ty + tx + collThrustCmd) / 4.0;
+	//cmd.desiredThrustsN[3] = (-tz - ty - tx + collThrustCmd) / 4.0;
 
   //cmd.desiredThrustsN[0] = mass * 9.81f / 4.f; // front left
   //cmd.desiredThrustsN[1] = mass * 9.81f / 4.f; // front right
