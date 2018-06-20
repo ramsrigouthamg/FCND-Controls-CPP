@@ -148,27 +148,67 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
   Mat3x3F R = attitude.RotationMatrix_IwrtB();
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-  /*float c_d = collThrustCmd / mass;*/
-  /*pqrCmd.x = 0;
-  pqrCmd.y = 0;
 
-  if (collThrustCmd > 0) {
-	  float target_R13 = -min(max(accelCmd.x / c_d, -maxTiltAngle), maxTiltAngle);
-	  float target_R23 = -min(max(accelCmd.y / c_d, -maxTiltAngle), maxTiltAngle);
+  // declare matrix values
+  float R33 = R(2, 2);
+  float R21 = R(1, 0);
+  float R22 = R(1, 1);
+  float R12 = R(0, 1);
+  float R11 = R(0, 0);
 
-	  pqrCmd.x = (1 / R[2, 2]) * \
-		  (-R[1, 0] * kpBank * (R[0, 2] - target_R13) + \
-			  R[0, 0] * kpBank * (R[1, 2] - target_R23));
-	  pqrCmd.y = (1 / R[2, 2]) * \
-		  (-R[1, 1] * kpBank * (R[0, 2] - target_R13) + \
-			  R[0, 1] * kpBank * (R[1, 2] - target_R23));
+  // actual bodyframes
+  float actual_x = R(0, 2);
+  float actual_y = R(1, 2);
 
-  }
-  else {
-	  pqrCmd.x = 0;
-	  pqrCmd.y = 0;
 
-  }*/
+  // coll thrustcmd to accel.
+  float collective_accel = collThrustCmd / mass;
+  float target_x = accelCmd.x / collective_accel;
+  float target_y = accelCmd.y / collective_accel;
+
+
+
+
+  // acceleration error
+  float b_x_c_dot = kpBank * (target_x - actual_x);
+  float b_y_c_dot = kpBank * (target_y - actual_y);
+
+
+
+
+  // desired roll-pitch 
+  float p_c = (1 / R33)*(R21*b_x_c_dot - R11 * b_y_c_dot);
+  float q_c = (1 / R33)*(R22*b_x_c_dot - R12 * b_y_c_dot);
+
+
+  pqrCmd.x = p_c;
+  pqrCmd.y = q_c;
+  pqrCmd.z = 0;
+  // actual bodyframes
+  //float actual_x = R(0, 2);
+  //float actual_y = R(1, 2);
+
+  //float c_d = collThrustCmd / mass;
+  //float target_x = accelCmd.x / c_d;
+  //float target_y = accelCmd.y / c_d;
+
+  //if (collThrustCmd > 0) {
+	 // float target_R13 = -min(max(accelCmd.x / c_d, -maxTiltAngle), maxTiltAngle);
+	 // float target_R23 = -min(max(accelCmd.y / c_d, -maxTiltAngle), maxTiltAngle);
+
+	 // pqrCmd.x = (1 / R[2, 2]) * \
+		//  (-R[1, 0] * kpBank * (R[0, 2] - target_R13) + \
+		//	  R[0, 0] * kpBank * (R[1, 2] - target_R23));
+	 // pqrCmd.y = (1 / R[2, 2]) * \
+		//  (-R[1, 1] * kpBank * (R[0, 2] - target_R13) + \
+		//	  R[0, 1] * kpBank * (R[1, 2] - target_R23));
+
+  //}
+  //else {
+	 // pqrCmd.x = 0;
+	 // pqrCmd.y = 0;
+
+  //}
 
   
 
