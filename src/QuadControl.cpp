@@ -160,60 +160,40 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
   float actual_x = R(0, 2);
   float actual_y = R(1, 2);
 
+  if (collThrustCmd > 0) {
 
-  // coll thrustcmd to accel.
-  float collective_accel = collThrustCmd / mass;
-  float target_x = accelCmd.x / collective_accel;
-  float target_y = accelCmd.y / collective_accel;
-
-
-
-
-  // acceleration error
-  float b_x_c_dot = kpBank * (target_x - actual_x);
-  float b_y_c_dot = kpBank * (target_y - actual_y);
+	  // coll thrustcmd to accel.
+	  float collective_accel = -collThrustCmd / mass;
+	  float target_x = CONSTRAIN(accelCmd.x / collective_accel, -maxTiltAngle, maxTiltAngle);
+	  float target_y = CONSTRAIN(accelCmd.y / collective_accel, -maxTiltAngle, maxTiltAngle);
 
 
 
 
-  // desired roll-pitch 
-  float p_c = (1 / R33)*(R21*b_x_c_dot - R11 * b_y_c_dot);
-  float q_c = (1 / R33)*(R22*b_x_c_dot - R12 * b_y_c_dot);
+	  // acceleration error
+	  float b_x_c_dot = kpBank * (target_x - actual_x);
+	  float b_y_c_dot = kpBank * (target_y - actual_y);
 
 
-  pqrCmd.x = p_c;
-  pqrCmd.y = q_c;
-  pqrCmd.z = 0;
-  // actual bodyframes
-  //float actual_x = R(0, 2);
-  //float actual_y = R(1, 2);
 
-  //float c_d = collThrustCmd / mass;
-  //float target_x = accelCmd.x / c_d;
-  //float target_y = accelCmd.y / c_d;
 
-  //if (collThrustCmd > 0) {
-	 // float target_R13 = -min(max(accelCmd.x / c_d, -maxTiltAngle), maxTiltAngle);
-	 // float target_R23 = -min(max(accelCmd.y / c_d, -maxTiltAngle), maxTiltAngle);
+	  // desired roll-pitch 
+	  float p_c = (1 / R33)*(R21*b_x_c_dot - R11 * b_y_c_dot);
+	  float q_c = (1 / R33)*(R22*b_x_c_dot - R12 * b_y_c_dot);
 
-	 // pqrCmd.x = (1 / R[2, 2]) * \
-		//  (-R[1, 0] * kpBank * (R[0, 2] - target_R13) + \
-		//	  R[0, 0] * kpBank * (R[1, 2] - target_R23));
-	 // pqrCmd.y = (1 / R[2, 2]) * \
-		//  (-R[1, 1] * kpBank * (R[0, 2] - target_R13) + \
-		//	  R[0, 1] * kpBank * (R[1, 2] - target_R23));
 
-  //}
-  //else {
-	 // pqrCmd.x = 0;
-	 // pqrCmd.y = 0;
+	  pqrCmd.x = p_c;
+	  pqrCmd.y = q_c;
+	  pqrCmd.z = 0;
+  }
+  else {
+	  pqrCmd.x = 0;
+	  pqrCmd.y = 0;
+	  pqrCmd.z = 0;
+  }
 
-  //}
 
   
-
-
-
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   return pqrCmd;
