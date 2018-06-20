@@ -31,7 +31,7 @@ kpVelZ = 4
 kpBank = 8.5
 kpYaw = 1
 
-# Angle rate gains
+# Angle rate gains Scenario 2
 kpPQR = 85, 60.5, 15
 
 # limits
