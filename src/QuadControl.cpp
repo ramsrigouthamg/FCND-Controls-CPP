@@ -72,7 +72,7 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
 	float l = L / sqrt(2);
 	float tx = momentCmd[0] / l;
 	float ty = momentCmd[1] / l;
-	float tz = momentCmd[1] / kappa;
+	float tz = momentCmd[2] / kappa;
 
 	cmd.desiredThrustsN[0] = (-tz + ty + tx + collThrustCmd) / 4.0;
 	cmd.desiredThrustsN[1] = (tz + ty - tx + collThrustCmd) / 4.0;
