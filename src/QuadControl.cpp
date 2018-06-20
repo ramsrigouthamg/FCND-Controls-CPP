@@ -110,6 +110,7 @@ V3F QuadControl::BodyRateControl(V3F pqrCmd, V3F pqr)
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
   momentCmd = pqrCmd - pqr;
+  //momentCmd.x = Ixx * kpPQR.x* momentCmd.x;
   momentCmd.x = Ixx * kpPQR.x* momentCmd.x;
   momentCmd.y = Iyy * kpPQR.y* momentCmd.y;
   momentCmd.z = Izz * kpPQR.z* momentCmd.z;
@@ -145,6 +146,26 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
   Mat3x3F R = attitude.RotationMatrix_IwrtB();
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  float c_d = collThrustCmd / mass;
+  if (collThrustCmd > 0) {
+	  float target_R13 = -min(max(accelCmd.x / c_d, -maxTiltAngle), maxTiltAngle);
+	  float target_R23 = -min(max(accelCmd.y / c_d, -maxTiltAngle), maxTiltAngle);
+
+	  pqrCmd.x = (1 / R[2, 2]) * \
+		  (-R[1, 0] * kpBank * (R[0, 2] - target_R13) + \
+			  R[0, 0] * kpBank * (R[1, 2] - target_R23));
+	  pqrCmd.y = (1 / R[2, 2]) * \
+		  (-R[1, 1] * kpBank * (R[0, 2] - target_R13) + \
+			  R[0, 1] * kpBank * (R[1, 2] - target_R23));
+
+  }
+  else {
+	  pqrCmd.x = 0;
+	  pqrCmd.y = 0;
+
+  }
+
+  
 
 
 
