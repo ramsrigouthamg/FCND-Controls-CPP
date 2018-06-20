@@ -69,23 +69,25 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
   // You'll need the arm length parameter L, and the drag/thrust ratio kappa
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+	float l = L / sqrt(2);
+	float tx = momentCmd[0] / l;
+	float ty = momentCmd[1] / l;
+	float tz = momentCmd[1] / kappa;
 
-	float c_bar = collThrustCmd / kappa;
-	float p_bar = momentCmd.x / L * kappa;
-	float q_bar = momentCmd.y / L * kappa;
-	float r_bar = momentCmd.z / kappa;
-
-
+	cmd.desiredThrustsN[0] = (-tz + ty + tx + collThrustCmd) / 4.0;
+	cmd.desiredThrustsN[1] = (tz + ty - tx + collThrustCmd) / 4.0;
+	cmd.desiredThrustsN[2] = (tz - ty + tx + collThrustCmd) / 4.0;
+	cmd.desiredThrustsN[3] = (-tz - ty - tx + collThrustCmd) / 4.0;
 
   //cmd.desiredThrustsN[0] = mass * 9.81f / 4.f; // front left
   //cmd.desiredThrustsN[1] = mass * 9.81f / 4.f; // front right
   //cmd.desiredThrustsN[2] = mass * 9.81f / 4.f; // rear left
   //cmd.desiredThrustsN[3] = mass * 9.81f / 4.f; // rear right
 
-  cmd.desiredThrustsN[0] = (kappa / 4.f) *(c_bar + p_bar + q_bar + r_bar);
-  cmd.desiredThrustsN[3] = ((kappa / 2.f) *(c_bar + p_bar))- cmd.desiredThrustsN[0];
-  cmd.desiredThrustsN[2] = cmd.desiredThrustsN[0] - ((kappa / 2.f) *(p_bar + q_bar));
-  cmd.desiredThrustsN[1] = ((kappa / 2.f) *(c_bar - p_bar)) - cmd.desiredThrustsN[2];
+  //cmd.desiredThrustsN[0] = (kappa / 4.f) *(c_bar + p_bar + q_bar + r_bar);
+  //cmd.desiredThrustsN[3] = ((kappa / 2.f) *(c_bar + p_bar))- cmd.desiredThrustsN[0];
+  //cmd.desiredThrustsN[2] = cmd.desiredThrustsN[0] - ((kappa / 2.f) *(p_bar + q_bar));
+  //cmd.desiredThrustsN[1] = ((kappa / 2.f) *(c_bar - p_bar)) - cmd.desiredThrustsN[2];
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
@@ -146,7 +148,10 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
   Mat3x3F R = attitude.RotationMatrix_IwrtB();
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-  float c_d = collThrustCmd / mass;
+  /*float c_d = collThrustCmd / mass;*/
+  /*pqrCmd.x = 0;
+  pqrCmd.y = 0;
+
   if (collThrustCmd > 0) {
 	  float target_R13 = -min(max(accelCmd.x / c_d, -maxTiltAngle), maxTiltAngle);
 	  float target_R23 = -min(max(accelCmd.y / c_d, -maxTiltAngle), maxTiltAngle);
@@ -163,7 +168,7 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
 	  pqrCmd.x = 0;
 	  pqrCmd.y = 0;
 
-  }
+  }*/
 
   
 
