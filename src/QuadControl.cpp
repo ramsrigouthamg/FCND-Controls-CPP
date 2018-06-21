@@ -337,8 +337,10 @@ float QuadControl::YawControl(float yawCmd, float yaw)
 
   float yawRateCmd=0;
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-
-
+  float error = yawCmd - yaw;
+  error = fmodf(error, F_PI);
+  yawRateCmd = kpYaw * error;
+  
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   return yawRateCmd;
