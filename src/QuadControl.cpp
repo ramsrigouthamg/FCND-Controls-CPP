@@ -148,6 +148,7 @@ V3F QuadControl::BodyRateControl(V3F pqrCmd, V3F pqr)
   return momentCmd;
 }
 
+//Scenario 2, 3 and 4 updated 
 // returns a desired roll and pitch rate 
 V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, float collThrustCmd)
 {
