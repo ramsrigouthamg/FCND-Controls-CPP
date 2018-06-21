@@ -284,6 +284,23 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
   V3F accelCmd = accelCmdFF;
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  V3F pos_error = posCmd - pos;
+  V3F vel_error = velCmd - vel;
+  
+  float p_term_x = kpPosXY * pos_error.x;
+  float d_term_x = kpVelXY * vel_error.x;
+
+  float x_dot_dot_commanded = p_term_x + d_term_x + accelCmd.x;
+
+  float p_term_y = kpPosXY * pos_error.y;
+  float d_term_y = kpVelXY * vel_error.y;
+
+  float y_dot_dot_commanded = p_term_y + d_term_y + accelCmd.y;
+
+  accelCmd.x = x_dot_dot_commanded;
+  accelCmd.y = y_dot_dot_commanded;
+
+  if accelCmd.magXY()
 
   
 
