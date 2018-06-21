@@ -23,7 +23,7 @@ maxMotorThrust = 4.5
 kpPosXY = 12
 kpVelXY = 8
 
-kpPosZ = 0.25
+kpPosZ = 3
 kpVelZ = 12
 
 KiPosZ = 40
