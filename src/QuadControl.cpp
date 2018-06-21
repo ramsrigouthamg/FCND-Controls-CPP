@@ -246,8 +246,13 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
   float thrust = 0;
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  float pos_error = posZCmd - posZ;
+  float p_term_z = kpPosZ * pos_error;
+  float z_dot_commanded = p_term_z + velZCmd;
+  z_dot_commanded = CONSTRAIN(z_dot_commanded, -maxDescentRate, maxAscentRate);
+  float z_dot_dot_commanded = kpVelZ *(z_dot_commanded- velZ)+ accelZCmd;
 
-
+  thrust = (z_dot_dot_commanded - 9.81f) / R(2, 2);
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
   
@@ -286,6 +291,11 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
   V3F pos_error = posCmd - pos;
   V3F vel_error = velCmd - vel;
+
+  if (vel_error.magXY() > maxSpeedXY)
+  {
+	  vel_error *= maxSpeedXY / vel_error.magXY();
+  }
   
   float p_term_x = kpPosXY * pos_error.x;
   float d_term_x = kpVelXY * vel_error.x;
@@ -300,7 +310,10 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
   accelCmd.x = x_dot_dot_commanded;
   accelCmd.y = y_dot_dot_commanded;
 
-  if accelCmd.magXY()
+  if (accelCmd.magXY() > maxAccelXY)
+  {
+	  accelCmd *= maxAccelXY / accelCmd.magXY();
+  }
 
   
 
