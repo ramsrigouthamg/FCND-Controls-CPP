@@ -155,8 +155,9 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
 		target_y = -CONSTRAIN(accelCmd.y / c, -maxTiltAngle, maxTiltAngle);
 	}
 
-	auto b_x_c_dot = kpBank * (target_x - R(0, 2));
-	auto b_y_c_dot = kpBank * (target_y - R(1, 2));
+	// acceleration error
+	float b_x_c_dot = kpBank * (target_x - R(0, 2));
+	float b_y_c_dot = kpBank * (target_y - R(1, 2));
 
 	// desired roll-pitch 
 	float p_c = (1 / R(2, 2))*(R(1, 0)*b_x_c_dot - R(0, 0) * b_y_c_dot);
