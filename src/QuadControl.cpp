@@ -70,10 +70,6 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-	//F_tot = F0 + F1 + F2 + F3
-	//	tau_x = (F0 - F1 + F2 - F3) * l                 // This is Roll
-	//	tau_y = (F0 + F1 - F2 - F3) * l                 // This is Pitch
-	//	tau_z = (-F0 + F1 + F2 - F3) * kappa      // This is Yaw
 	float l = L / sqrt(2);
 	float A = collThrustCmd;
 	float B = momentCmd.x / l;
@@ -87,30 +83,11 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
 	float F3 = (A - B - C + D) / 4.0; // rear right 
 
 
-	cmd.desiredThrustsN[0] = F0; // front left
-	cmd.desiredThrustsN[1] = F1; // front right
-	cmd.desiredThrustsN[2] = F2; // rear left
-	cmd.desiredThrustsN[3] = F3; // rear right
 
-	//float l = L / sqrt(2);
-	//float tx = momentCmd[0] / l;
-	//float ty = momentCmd[1] / l;
-	//float tz = momentCmd[2] / kappa;
-
-	//cmd.desiredThrustsN[0] = (-tz + ty + tx + collThrustCmd) / 4.0;
-	//cmd.desiredThrustsN[1] = (tz + ty - tx + collThrustCmd) / 4.0;
-	//cmd.desiredThrustsN[2] = (tz - ty + tx + collThrustCmd) / 4.0;
-	//cmd.desiredThrustsN[3] = (-tz - ty - tx + collThrustCmd) / 4.0;
-
-  //cmd.desiredThrustsN[0] = mass * 9.81f / 4.f; // front left
-  //cmd.desiredThrustsN[1] = mass * 9.81f / 4.f; // front right
-  //cmd.desiredThrustsN[2] = mass * 9.81f / 4.f; // rear left
-  //cmd.desiredThrustsN[3] = mass * 9.81f / 4.f; // rear right
-
-  //cmd.desiredThrustsN[0] = (kappa / 4.f) *(c_bar + p_bar + q_bar + r_bar);
-  //cmd.desiredThrustsN[3] = ((kappa / 2.f) *(c_bar + p_bar))- cmd.desiredThrustsN[0];
-  //cmd.desiredThrustsN[2] = cmd.desiredThrustsN[0] - ((kappa / 2.f) *(p_bar + q_bar));
-  //cmd.desiredThrustsN[1] = ((kappa / 2.f) *(c_bar - p_bar)) - cmd.desiredThrustsN[2];
+	cmd.desiredThrustsN[0] = CONSTRAIN(F0, minMotorThrust, maxMotorThrust);
+	cmd.desiredThrustsN[1] = CONSTRAIN(F1, minMotorThrust, maxMotorThrust);
+	cmd.desiredThrustsN[2] = CONSTRAIN(F2, minMotorThrust, maxMotorThrust);
+	cmd.desiredThrustsN[3] = CONSTRAIN(F3, minMotorThrust, maxMotorThrust);
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
