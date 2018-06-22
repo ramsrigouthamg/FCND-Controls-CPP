@@ -14,46 +14,44 @@
 
 void QuadControl::Init()
 {
-	BaseController::Init();
+  BaseController::Init();
 
-	// variables needed for integral control
-	integratedAltitudeError = 0;
-
+  // variables needed for integral control
+  integratedAltitudeError = 0;
+    
 #ifndef __PX4_NUTTX
-	// Load params from simulator parameter system
-	ParamsHandle config = SimpleConfig::GetInstance();
+  // Load params from simulator parameter system
+  ParamsHandle config = SimpleConfig::GetInstance();
+   
+  // Load parameters (default to 0)
+  kpPosXY = config->Get(_config+".kpPosXY", 0);
+  kpPosZ = config->Get(_config + ".kpPosZ", 0);
+  KiPosZ = config->Get(_config + ".KiPosZ", 0);
+     
+  kpVelXY = config->Get(_config + ".kpVelXY", 0);
+  kpVelZ = config->Get(_config + ".kpVelZ", 0);
 
-	// Load parameters (default to 0)
-	kpPosXY = config->Get(_config + ".kpPosXY", 0);
-	kpPosZ = config->Get(_config + ".kpPosZ", 0);
-	KiPosZ = config->Get(_config + ".KiPosZ", 0);
+  kpBank = config->Get(_config + ".kpBank", 0);
+  kpYaw = config->Get(_config + ".kpYaw", 0);
 
-	kpVelXY = config->Get(_config + ".kpVelXY", 0);
-	kpVelZ = config->Get(_config + ".kpVelZ", 0);
+  kpPQR = config->Get(_config + ".kpPQR", V3F());
 
-	kpBank = config->Get(_config + ".kpBank", 0);
-	kpYaw = config->Get(_config + ".kpYaw", 0);
+  maxDescentRate = config->Get(_config + ".maxDescentRate", 100);
+  maxAscentRate = config->Get(_config + ".maxAscentRate", 100);
+  maxSpeedXY = config->Get(_config + ".maxSpeedXY", 100);
+  maxAccelXY = config->Get(_config + ".maxHorizAccel", 100);
 
-	kpPQR = config->Get(_config + ".kpPQR", V3F());
+  maxTiltAngle = config->Get(_config + ".maxTiltAngle", 100);
 
-	maxDescentRate = config->Get(_config + ".maxDescentRate", 100);
-	maxAscentRate = config->Get(_config + ".maxAscentRate", 100);
-	maxSpeedXY = config->Get(_config + ".maxSpeedXY", 100);
-	maxAccelXY = config->Get(_config + ".maxHorizAccel", 100);
-
-	maxTiltAngle = config->Get(_config + ".maxTiltAngle", 100);
-
-	minMotorThrust = config->Get(_config + ".minMotorThrust", 0);
-	maxMotorThrust = config->Get(_config + ".maxMotorThrust", 100);
+  minMotorThrust = config->Get(_config + ".minMotorThrust", 0);
+  maxMotorThrust = config->Get(_config + ".maxMotorThrust", 100);
 #else
-	// load params from PX4 parameter system
-	//TODO
-	param_get(param_find("MC_PITCH_P"), &Kp_bank);
-	param_get(param_find("MC_YAW_P"), &Kp_yaw);
+  // load params from PX4 parameter system
+  //TODO
+  param_get(param_find("MC_PITCH_P"), &Kp_bank);
+  param_get(param_find("MC_YAW_P"), &Kp_yaw);
 #endif
 }
-
-#define CONSTRAIN1(a1, a2, a3) (a1)
 
 VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momentCmd)
 {
