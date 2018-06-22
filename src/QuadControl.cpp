@@ -168,38 +168,40 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
 
 float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, float velZ, Quaternion<float> attitude, float accelZCmd, float dt)
 {
-	// Calculate desired quad thrust based on altitude setpoint, actual altitude,
-	//   vertical velocity setpoint, actual vertical velocity, and a vertical 
-	//   acceleration feed-forward command
-	// INPUTS: 
-	//   posZCmd, velZCmd: desired vertical position and velocity in NED [m]
-	//   posZ, velZ: current vertical position and velocity in NED [m]
-	//   accelZCmd: feed-forward vertical acceleration in NED [m/s2]
-	//   dt: the time step of the measurements [seconds]
-	// OUTPUT:
-	//   return a collective thrust command in [N]
+  // Calculate desired quad thrust based on altitude setpoint, actual altitude,
+  //   vertical velocity setpoint, actual vertical velocity, and a vertical 
+  //   acceleration feed-forward command
+  // INPUTS: 
+  //   posZCmd, velZCmd: desired vertical position and velocity in NED [m]
+  //   posZ, velZ: current vertical position and velocity in NED [m]
+  //   accelZCmd: feed-forward vertical acceleration in NED [m/s2]
+  //   dt: the time step of the measurements [seconds]
+  // OUTPUT:
+  //   return a collective thrust command in [N]
 
-	// HINTS: 
-	//  - we already provide rotation matrix R: to get element R[1,2] (python) use R(1,2) (C++)
-	//  - you'll need the gain parameters kpPosZ and kpVelZ
-	//  - maxAscentRate and maxDescentRate are maximum vertical speeds. Note they're both >=0!
-	//  - make sure to return a force, not an acceleration
-	//  - remember that for an upright quad in NED, thrust should be HIGHER if the desired Z acceleration is LOWER
+  // HINTS: 
+  //  - we already provide rotation matrix R: to get element R[1,2] (python) use R(1,2) (C++)
+  //  - you'll need the gain parameters kpPosZ and kpVelZ
+  //  - maxAscentRate and maxDescentRate are maximum vertical speeds. Note they're both >=0!
+  //  - make sure to return a force, not an acceleration
+  //  - remember that for an upright quad in NED, thrust should be HIGHER if the desired Z acceleration is LOWER
 
-	Mat3x3F R = attitude.RotationMatrix_IwrtB();
-	float thrust = 0;
+  Mat3x3F R = attitude.RotationMatrix_IwrtB();
+  float thrust = 0;
 
-	////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  float pos_error = posZCmd - posZ;
+  float p_term_z = kpPosZ * pos_error;
+  float z_dot_commanded = p_term_z + velZCmd;
+  z_dot_commanded = CONSTRAIN(z_dot_commanded, -maxDescentRate, maxAscentRate);
+  integratedAltitudeError +=  pos_error *dt;
+  float z_dot_dot_commanded = KiPosZ* integratedAltitudeError + kpVelZ *(z_dot_commanded- velZ)+ accelZCmd;
 
-	auto positionError = posZCmd - posZ;
-	velZCmd = CONSTRAIN(velZCmd + kpPosZ * positionError, -maxAscentRate, maxDescentRate);
-	integratedAltitudeError += dt * positionError;
-	auto u_bar = kpVelZ * (velZCmd - velZ) + KiPosZ * integratedAltitudeError + accelZCmd;
-	thrust = -mass * (u_bar - CONST_GRAVITY) / R(2, 2);
+  thrust = -mass * (z_dot_dot_commanded - CONST_GRAVITY) / R(2, 2);
 
-	/////////////////////////////// END STUDENT CODE ////////////////////////////
-
-	return thrust;
+  /////////////////////////////// END STUDENT CODE ////////////////////////////
+  
+  return thrust;
 }
 
 // returns a desired acceleration in global frame
@@ -251,32 +253,31 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
 // returns desired yaw rate
 float QuadControl::YawControl(float yawCmd, float yaw)
 {
-	// Calculate a desired yaw rate to control yaw to yawCmd
-	// INPUTS: 
-	//   yawCmd: commanded yaw [rad]
-	//   yaw: current yaw [rad]
-	// OUTPUT:
-	//   return a desired yaw rate [rad/s]
-	// HINTS: 
-	//  - use fmodf(foo,b) to unwrap a radian angle measure float foo to range [0,b]. 
-	//  - use the yaw control gain parameter kpYaw
+  // Calculate a desired yaw rate to control yaw to yawCmd
+  // INPUTS: 
+  //   yawCmd: commanded yaw [rad]
+  //   yaw: current yaw [rad]
+  // OUTPUT:
+  //   return a desired yaw rate [rad/s]
+  // HINTS: 
+  //  - use fmodf(foo,b) to unwrap a radian angle measure float foo to range [0,b]. 
+  //  - use the yaw control gain parameter kpYaw
 
-	float yawRateCmd = 0;
-	////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  float yawRateCmd=0;
+  ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  float yawError = yawCmd - yaw;
+  yawError = fmodf(yawError, 2.0f * F_PI);
 
-	auto yawError = (yawCmd - yaw);
-	yawError = fmodf(yawError, 2.0f * F_PI);
+  if (yawError > F_PI)
+	  yawError = yawError - 2.0f * F_PI;
+  else if (yawError < -F_PI)
+	  yawError = yawError + 2.0f * F_PI;
 
-	if (yawError > F_PI)
-		yawError = yawError - 2.0f * F_PI;
-	else if (yawError < -F_PI)
-		yawError = yawError + 2.0f * F_PI;
+  yawRateCmd = kpYaw * yawError;
 
-	yawRateCmd = kpYaw * yawError;
+  /////////////////////////////// END STUDENT CODE ////////////////////////////
 
-	/////////////////////////////// END STUDENT CODE ////////////////////////////
-
-	return yawRateCmd;
+  return yawRateCmd;
 
 }
 
