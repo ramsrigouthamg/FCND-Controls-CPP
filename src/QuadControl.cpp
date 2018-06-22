@@ -148,11 +148,13 @@ V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, floa
 	float target_x = 0.0f;
 	float target_y = 0.0f;
 
-	if (collThrustCmd > 0)
-	{
-		auto c = collThrustCmd / mass;  // convert to acceleration
-		target_x = -CONSTRAIN(accelCmd.x / c, -maxTiltAngle, maxTiltAngle);
-		target_y = -CONSTRAIN(accelCmd.y / c, -maxTiltAngle, maxTiltAngle);
+	if (collThrustCmd > 0) {
+
+		// coll thrustcmd to accel.
+		float collective_accel = collThrustCmd / mass;
+		target_x = -CONSTRAIN(accelCmd.x / collective_accel, -maxTiltAngle, maxTiltAngle);
+		target_y = -CONSTRAIN(accelCmd.y / collective_accel, -maxTiltAngle, maxTiltAngle);
+
 	}
 
 	// acceleration error
