@@ -55,70 +55,71 @@ void QuadControl::Init()
 
 VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momentCmd)
 {
-	// Convert a desired 3-axis moment and collective thrust command to 
-	//   individual motor thrust commands
-	// INPUTS: 
-	//   collThrustCmd: desired collective thrust [N]
-	//   momentCmd: desired rotation moment about each axis [N m]
-	// OUTPUT:
-	//   set class member variable cmd (class variable for graphing) where
-	//   cmd.desiredThrustsN[0..3]: motor commands, in [N]
+  // Convert a desired 3-axis moment and collective thrust command to 
+  //   individual motor thrust commands
+  // INPUTS: 
+  //   collThrustCmd: desired collective thrust [N]
+  //   momentCmd: desired rotation moment about each axis [N m]
+  // OUTPUT:
+  //   set class member variable cmd (class variable for graphing) where
+  //   cmd.desiredThrustsN[0..3]: motor commands, in [N]
 
-	// HINTS: 
-	// - you can access parts of momentCmd via e.g. momentCmd.x
-	// You'll need the arm length parameter L, and the drag/thrust ratio kappa
+  // HINTS: 
+  // - you can access parts of momentCmd via e.g. momentCmd.x
+  // You'll need the arm length parameter L, and the drag/thrust ratio kappa
 
-	////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-	auto c_bar = collThrustCmd;
-	auto p_bar = 2.0f * momentCmd.x / L / sqrt(2);
-	auto q_bar = 2.0f * momentCmd.y / L / sqrt(2);
-	auto r_bar = momentCmd.z / kappa;
+	float l = L / sqrt(2);
+	float A = collThrustCmd;
+	float B = momentCmd.x / l;
+	float C = momentCmd.y / l;
+	float D = momentCmd.z / kappa;
 
-	auto omega_1 = 0.25f * (c_bar + p_bar + q_bar - r_bar);
-	auto omega_2 = 0.25f * (c_bar - p_bar + q_bar + r_bar);
-	auto omega_3 = 0.25f * (c_bar + p_bar - q_bar + r_bar);
-	auto omega_4 = 0.25f * (c_bar - p_bar - r_bar - q_bar);
+	float F0 = (A + B + C - D) / 4.0f;// front left
+	float F1 = (A - B + C + D) / 4.0f; // front right
+	float F2 = (A + B - C + D) / 4.0f; // rear left
+	float F3 = (A - B - C - D) / 4.0f; // rear right 
 
-	cmd.desiredThrustsN[0] = omega_1; // front left
-	cmd.desiredThrustsN[1] = omega_2; // front right
-	cmd.desiredThrustsN[2] = omega_3; // rear left
-	cmd.desiredThrustsN[3] = omega_4; // rear right
+	cmd.desiredThrustsN[0] = F0;
+	cmd.desiredThrustsN[1] = F1;
+	cmd.desiredThrustsN[2] = F2;
+	cmd.desiredThrustsN[3] = F3;
 
-									  /////////////////////////////// END STUDENT CODE ////////////////////////////
+  /////////////////////////////// END STUDENT CODE ////////////////////////////
 
-	return cmd;
+  return cmd;
 }
 
 V3F QuadControl::BodyRateControl(V3F pqrCmd, V3F pqr)
 {
-	// Calculate a desired 3-axis moment given a desired and current body rate
-	// INPUTS: 
-	//   pqrCmd: desired body rates [rad/s]
-	//   pqr: current or estimated body rates [rad/s]
-	// OUTPUT:
-	//   return a V3F containing the desired moments for each of the 3 axes
+  // Calculate a desired 3-axis moment given a desired and current body rate
+  // INPUTS: 
+  //   pqrCmd: desired body rates [rad/s]
+  //   pqr: current or estimated body rates [rad/s]
+  // OUTPUT:
+  //   return a V3F containing the desired moments for each of the 3 axes
 
-	// HINTS: 
-	//  - you can use V3Fs just like scalars: V3F a(1,1,1), b(2,3,4), c; c=a-b;
-	//  - you'll need parameters for moments of inertia Ixx, Iyy, Izz
-	//  - you'll also need the gain parameter kpPQR (it's a V3F)
+  // HINTS: 
+  //  - you can use V3Fs just like scalars: V3F a(1,1,1), b(2,3,4), c; c=a-b;
+  //  - you'll need parameters for moments of inertia Ixx, Iyy, Izz
+  //  - you'll also need the gain parameter kpPQR (it's a V3F)
 
-	V3F momentCmd;
+  V3F momentCmd;
 
-	////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  momentCmd = pqrCmd - pqr;
+  //momentCmd.x = Ixx * kpPQR.x* momentCmd.x;
+  momentCmd.x = Ixx * kpPQR.x* momentCmd.x;
+  momentCmd.y = Iyy * kpPQR.y* momentCmd.y;
+  momentCmd.z = Izz * kpPQR.z* momentCmd.z;
 
-	auto pqrError = pqrCmd - pqr;
-	auto u_bar = kpPQR * pqrError;
-	momentCmd.x = Ixx * u_bar.x;
-	momentCmd.y = Iyy * u_bar.y;
-	momentCmd.z = Izz * u_bar.z;
+  /////////////////////////////// END STUDENT CODE ////////////////////////////
 
-	/////////////////////////////// END STUDENT CODE ////////////////////////////
-
-	return momentCmd;
+  return momentCmd;
 }
 
+//Scenario 2, 3 and 4 updated 
 // returns a desired roll and pitch rate 
 V3F QuadControl::RollPitchControl(V3F accelCmd, Quaternion<float> attitude, float collThrustCmd)
 {
