@@ -207,47 +207,52 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
 // returns a desired acceleration in global frame
 V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel, V3F accelCmdFF)
 {
-	// Calculate a desired horizontal acceleration based on 
-	//  desired lateral position/velocity/acceleration and current pose
-	// INPUTS: 
-	//   posCmd: desired position, in NED [m]
-	//   velCmd: desired velocity, in NED [m/s]
-	//   pos: current position, NED [m]
-	//   vel: current velocity, NED [m/s]
-	//   accelCmdFF: feed-forward acceleration, NED [m/s2]
-	// OUTPUT:
-	//   return a V3F with desired horizontal accelerations. 
-	//     the Z component should be 0
-	// HINTS: 
-	//  - use the gain parameters kpPosXY and kpVelXY
-	//  - make sure you limit the maximum horizontal velocity and acceleration
-	//    to maxSpeedXY and maxAccelXY
+  // Calculate a desired horizontal acceleration based on 
+  //  desired lateral position/velocity/acceleration and current pose
+  // INPUTS: 
+  //   posCmd: desired position, in NED [m]
+  //   velCmd: desired velocity, in NED [m/s]
+  //   pos: current position, NED [m]
+  //   vel: current velocity, NED [m/s]
+  //   accelCmdFF: feed-forward acceleration, NED [m/s2]
+  // OUTPUT:
+  //   return a V3F with desired horizontal accelerations. 
+  //     the Z component should be 0
+  // HINTS: 
+  //  - use the gain parameters kpPosXY and kpVelXY
+  //  - make sure you limit the maximum horizontal velocity and acceleration
+  //    to maxSpeedXY and maxAccelXY
 
-	// make sure we don't have any incoming z-component
-	accelCmdFF.z = 0;
-	velCmd.z = 0;
-	posCmd.z = pos.z;
+  // make sure we don't have any incoming z-component
+  accelCmdFF.z = 0;
+  velCmd.z = 0;
+  posCmd.z = pos.z;
 
-	// we initialize the returned desired acceleration to the feed-forward value.
-	// Make sure to _add_, not simply replace, the result of your controller
-	// to this variable
-	V3F accelCmd = accelCmdFF;
+  // we initialize the returned desired acceleration to the feed-forward value.
+  // Make sure to _add_, not simply replace, the result of your controller
+  // to this variable
+  V3F accelCmd = accelCmdFF;
 
-	////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-	velCmd += kpPosXY * (posCmd - pos);
-	auto magVelCmd = velCmd.mag();
-	if (magVelCmd > maxSpeedXY)
-		velCmd *= maxSpeedXY / magVelCmd;
 
-	accelCmd += kpVelXY * (velCmd - vel);
-	auto magAccelCmd = accelCmd.mag();
-	if (magAccelCmd > maxAccelXY)
-		magAccelCmd *= maxAccelXY / magAccelCmd;
+  velCmd += kpPosXY * (posCmd - pos);
 
-	/////////////////////////////// END STUDENT CODE ////////////////////////////
+  if (velCmd.mag() > maxSpeedXY)
+  {
+	  velCmd *= maxSpeedXY / velCmd.mag();
+  }
 
-	return accelCmd;
+  accelCmd += kpVelXY * (velCmd - vel);
+
+  if (accelCmd.mag() > maxAccelXY)
+  {
+	  accelCmd *= maxAccelXY / accelCmd.mag();
+  }
+
+  /////////////////////////////// END STUDENT CODE ////////////////////////////
+
+  return accelCmd;
 }
 
 // returns desired yaw rate
@@ -283,20 +288,20 @@ float QuadControl::YawControl(float yawCmd, float yaw)
 
 VehicleCommand QuadControl::RunControl(float dt, float simTime)
 {
-	curTrajPoint = GetNextTrajectoryPoint(simTime);
+  curTrajPoint = GetNextTrajectoryPoint(simTime);
 
-	float collThrustCmd = AltitudeControl(curTrajPoint.position.z, curTrajPoint.velocity.z, estPos.z, estVel.z, estAtt, curTrajPoint.accel.z, dt);
+  float collThrustCmd = AltitudeControl(curTrajPoint.position.z, curTrajPoint.velocity.z, estPos.z, estVel.z, estAtt, curTrajPoint.accel.z, dt);
 
-	// reserve some thrust margin for angle control
-	float thrustMargin = .1f*(maxMotorThrust - minMotorThrust);
-	collThrustCmd = CONSTRAIN(collThrustCmd, (minMotorThrust + thrustMargin)*4.f, (maxMotorThrust - thrustMargin)*4.f);
+  // reserve some thrust margin for angle control
+  float thrustMargin = .1f*(maxMotorThrust - minMotorThrust);
+  collThrustCmd = CONSTRAIN(collThrustCmd, (minMotorThrust+ thrustMargin)*4.f, (maxMotorThrust-thrustMargin)*4.f);
+  
+  V3F desAcc = LateralPositionControl(curTrajPoint.position, curTrajPoint.velocity, estPos, estVel, curTrajPoint.accel);
+  
+  V3F desOmega = RollPitchControl(desAcc, estAtt, collThrustCmd);
+  desOmega.z = YawControl(curTrajPoint.attitude.Yaw(), estAtt.Yaw());
 
-	V3F desAcc = LateralPositionControl(curTrajPoint.position, curTrajPoint.velocity, estPos, estVel, curTrajPoint.accel);
+  V3F desMoment = BodyRateControl(desOmega, estOmega);
 
-	V3F desOmega = RollPitchControl(desAcc, estAtt, collThrustCmd);
-	desOmega.z = YawControl(curTrajPoint.attitude.Yaw(), estAtt.Yaw());
-
-	V3F desMoment = BodyRateControl(desOmega, estOmega);
-
-	return GenerateMotorCommands(collThrustCmd, desMoment);
+  return GenerateMotorCommands(collThrustCmd, desMoment);
 }
